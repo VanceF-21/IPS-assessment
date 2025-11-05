@@ -1,7 +1,7 @@
-# Introductory Probability and Statistics: Biomarkers and Pain Analysis
+### Introductory Probability and Statistics: Biomarkers and Pain Analysis
 
-# 1. SETUP
 
+## 1. SETUP
 library(readxl)
 library(dplyr)
 library(tidyr)
@@ -16,10 +16,9 @@ cat("Setup complete.\n\n")
 
 
 # 2. DATA LOADING AND PREPROCESSING
-
 suppressMessages({
-  biomarkers_raw <- read_excel("biomarkers.xlsx")
-  covariates_raw <- read_excel("covariates.xlsx")
+  biomarkers_raw <- read_excel("data/biomarkers.xlsx")
+  covariates_raw <- read_excel("data/covariates.xlsx")
 })
 
 biomarkers_cleaned <- clean_names(biomarkers_raw)
@@ -46,11 +45,11 @@ covariates_processed <- covariates_cleaned %>%
 merged_data <- inner_join(biomarkers_inclusion, covariates_processed, by = "patient_id")
 
 cat("Data loading complete.\n")
-cat(paste("Observations after merging:", nrow(merged_data), "\n"))  # expect 117
+cat(paste("Observations after merging:", nrow(merged_data), "\n"))
 
 # Handle missing 12-month VAS values
 missing_count <- sum(is.na(merged_data$vas_12months))
-cat(paste("Missing values in vas_12months:", missing_count, "\n"))  # expect 2
+cat(paste("Missing values in vas_12months:", missing_count, "\n"))
 
 # Task-specific subsets
 data_task1 <- merged_data                                  # 117 obs
@@ -81,8 +80,7 @@ print(summary_by_sex, width = Inf)
 cat("\n")
 
 
-# 3. TASK 1: HYPOTHESIS TESTING
-
+## 3. TASK 1: HYPOTHESIS TESTING
 cat("TASK 1: HYPOTHESIS TESTING\n")
 cat("Research question: Do biomarker levels at inclusion differ between males and females?\n\n")
 
@@ -146,8 +144,7 @@ if (nrow(sig_biomarkers) > 0) {
 cat("\nTask 1 complete.\n\n")
 
 
-# 4. TASK 2: REGRESSION MODELLING
-
+## 4. TASK 2: REGRESSION MODELLING
 cat("TASK 2: REGRESSION MODELLING\n\n")
 
 train_index <- sample(1:nrow(data_task2), size = 0.8 * nrow(data_task2))
@@ -158,7 +155,6 @@ cat(paste("Training set:", nrow(train_data), "observations\n"))
 cat(paste("Testing set:",  nrow(test_data),  "observations\n\n"))
 
 # FULL MODEL
-
 cat("--- FULL MODEL ---\n")
 covariate_names <- c("age", "vas_at_inclusion")
 all_predictors  <- c(biomarker_names, covariate_names)
@@ -205,7 +201,6 @@ cat("\nOut-of-sample evaluation (Test):\n")
 cat(paste("RMSE:", round(rmse_full, 4),
           "MAE:", round(mae_full, 4),
           "Correlation:", round(cor_full, 4), "\n\n"))
-
 
 # Reduced model
 cat("--- REDUCED MODEL - VARIABLE SELECTION ---\n\n")
@@ -339,7 +334,6 @@ if (nrow(all_predictors_ranked) >= 1) {
   print(comparison_df, row.names = FALSE)
   
   # Visual comparison of model selection
-  
   # Main plot: Test RMSE
   selection_plot <- ggplot(selection_results, aes(x = k)) +
     geom_line(aes(y = rmse_test, color = "Test RMSE"), linewidth = 1) +
@@ -356,7 +350,7 @@ if (nrow(all_predictors_ranked) >= 1) {
              label = paste("Selected k =", final_k),
              hjust = -0.1, color = "red", size = 4)
   
-  ggsave("model_selection.pdf", selection_plot, width = 8, height = 5)
+  ggsave("figs/model_selection.pdf", selection_plot, width = 8, height = 5)
   print(selection_plot)
   
   # Additional plot: Multiple metrics comparison
@@ -383,7 +377,7 @@ if (nrow(all_predictors_ranked) >= 1) {
     scale_x_continuous(breaks = seq(1, max_predictors, by = ifelse(max_predictors > 8, 2, 1))) +
     theme(strip.text = element_text(face = "bold"))
   
-  ggsave("model_selection_detailed.pdf", multi_plot, width = 10, height = 8)
+  ggsave("figs/model_selection_detailed.pdf", multi_plot, width = 10, height = 8)
   print(multi_plot)
   
 } else {
@@ -396,15 +390,15 @@ if (nrow(all_predictors_ranked) >= 1) {
 cat("\nTask 2 complete.\n\n")
 
 
-# Generate diagnostic plots
-pdf("diagnostic_full.pdf", width = 10, height = 10)
+## Generate diagnostic plots
+pdf("figs/diagnostic_full.pdf", width = 10, height = 10)
 par(mfrow = c(2, 2), cex.axis = 1.8, cex.lab = 1.8, cex.main = 1.8, 
     mar = c(5, 5, 3, 2))
 plot(model_full)
 dev.off()
 
 if (!is.null(model_reduced)) {
-  pdf("diagnostic_reduced.pdf", width = 10, height = 10)
+  pdf("figs/diagnostic_reduced.pdf", width = 10, height = 10)
   par(mfrow = c(2, 2), cex.axis = 1.8, cex.lab = 1.8, cex.main = 1.8, 
       mar = c(5, 5, 3, 2))
   plot(model_reduced)
@@ -414,7 +408,7 @@ if (!is.null(model_reduced)) {
 par(mfrow = c(1, 1))
 
 
-# Prediction plots
+## Prediction plots
 plot_full <- ggplot(
   data.frame(actual = test_data$vas_12months, predicted = predictions_full),
   aes(x = actual, y = predicted)
@@ -430,7 +424,7 @@ plot_full <- ggplot(
                           "\nRMSE = ", round(rmse_full, 2)),
            size = 5, color = "blue")
 
-ggsave("prediction_full.pdf", plot_full, width = 7, height = 7)
+ggsave("figs/prediction_full.pdf", plot_full, width = 7, height = 7)
 print(plot_full)
 
 if (!is.null(predictions_reduced)) {
@@ -449,7 +443,7 @@ if (!is.null(predictions_reduced)) {
                             "\nRMSE = ", round(rmse_reduced, 2)),
              size = 5, color = "darkgreen")
   
-  ggsave("prediction_reduced.pdf", plot_reduced, width = 7, height = 7)
+  ggsave("figs/prediction_reduced.pdf", plot_reduced, width = 7, height = 7)
   print(plot_reduced)
 }
 
